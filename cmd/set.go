@@ -16,8 +16,12 @@ var setCmd = &cobra.Command{
 	Long: `Use the 'set' command, along with a key name, a
 	key value, followed by the -k flag with an encoding key
 	to store an encrypted key locally.`,
+	// Rely on cobra PositionalArgs for 'non-named' flags
+	Args: cobra.MatchAll(cobra.ExactArgs(2)),
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("set called")
+		for _, arg := range args {
+			fmt.Println(arg)
+		}
 	},
 }
 
@@ -25,12 +29,7 @@ func init() {
 	rootCmd.AddCommand(setCmd)
 
 	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// setCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// setCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	setCmd.Flags().StringP("encryptionKey", "k", "", `The keyName flag (-k) is 
+	used to provide an encryption key to encrypt a key`)
+	setCmd.MarkFlagRequired("encryptionKey")
 }
