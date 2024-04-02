@@ -11,10 +11,12 @@ var rootCmd = &cobra.Command{
 	Use:   "secrets",
 	Short: "A tool to store and fetch encrypted files",
 	Long: `This is a package that provides a CLI tool to store and
-	retrieve encrypted files, much like Hashicorp's Vault product.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	// Run: func(cmd *cobra.Command, args []string) { },
+	retrieve encrypted files, much like Hashicorp's Vault product.
+	You will need to use either:
+	1. The 'set' command with a key name, followed by the -k flag
+		and an encoding key to set an encrypted value; or
+	2. The 'get' command with a key name, followed by the -k flag
+		with your encoding key to fetch an encrypted value.`,
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
