@@ -7,28 +7,31 @@ import (
 	vault "secrets/pkg/vault"
 )
 
+const secretsLocation = "/Users/dean/Desktop"
+
 func main() {
 	// Temporarily disable CLI
 	// cmd.Execute()
 	vault := vault.FileVault{
 		EncryptionKey: "6368616e676520746869732070617373",
-		FilePath:      "/Users/dean/Desktop",
 	}
 
 	var secretsFile *os.File
 	// Check if secrets files exists
-	if _, err := os.Stat(vault.FilePath + "/secrets.txt"); err != nil {
-		log.Printf("creating secrets.txt file at %s", vault.FilePath)
-		secretsFile, err = os.Create(vault.FilePath + "/secrets.txt")
+	if _, err := os.Stat(secretsLocation); err != nil {
+		log.Printf("creating secrets.txt file at %s", secretsLocation)
+		secretsFile, err = os.Create(secretsLocation)
 		if err != nil {
 			log.Fatalf("could not create secrets file: %s", err)
 		}
 	} else {
-		secretsFile, err = os.Open(vault.FilePath + "/secrets.txt")
+		secretsFile, err = os.Open(secretsLocation)
 		if err != nil {
 			log.Fatalf("could not open secrets file: %s", err)
 		}
+		log.Println("secrets.txt file already exists")
 	}
 
+	// Write the file to a map, insert onto filevault
 	fmt.Println(secretsFile.Name())
 }

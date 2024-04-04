@@ -13,14 +13,13 @@ import (
 // The CLI doesn't seem to allow persistent running app
 // so memory will be wiped on every go run
 type FileVault struct {
-	// Where to write the file
-	FilePath      string
+	KeySet        map[string]string
 	EncryptionKey string
 }
 
-// Rely on position args when calling
-func (f *FileVault) Set(value, encryptionKey string) error {
-	key, _ := hex.DecodeString(encryptionKey)
+// Does not allow for amending existing
+func (f *FileVault) Set(value string) error {
+	key, _ := hex.DecodeString(f.EncryptionKey)
 	plaintext := []byte(value)
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -39,13 +38,13 @@ func (f *FileVault) Set(value, encryptionKey string) error {
 
 	// ciphertext is now encrypted
 	fmt.Println(ciphertext)
-	// Need to figure out how to write to file
+	// Add this to our map
 	return nil
 }
 
-func (f *FileVault) Get(value, encryptionKey string) error {
-	key, _ := hex.DecodeString(encryptionKey)
-	// Pull this value from db
+func (f *FileVault) Get(value string) error {
+	key, _ := hex.DecodeString(f.EncryptionKey)
+	// Pull this value from file
 	ciphertext, _ := hex.DecodeString("")
 
 	block, err := aes.NewCipher(key)
