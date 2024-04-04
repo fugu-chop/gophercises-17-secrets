@@ -7,14 +7,20 @@ import (
 	vault "secrets/pkg/vault"
 )
 
-const secretsLocation = "/Users/dean/Desktop"
+const (
+	secretsLocation = "/Users/dean/Desktop"
+	encryptionKey   = "6368616e676520746869732070617373"
+)
 
 func main() {
 	// Temporarily disable CLI
 	// cmd.Execute()
 	vault := vault.FileVault{
-		EncryptionKey: "6368616e676520746869732070617373",
+		EncryptionKey: encryptionKey,
 	}
+
+	// Shut the linter up
+	_ = vault
 
 	var secretsFile *os.File
 	// Check if secrets files exists
