@@ -1,4 +1,4 @@
-package filevault
+package vault
 
 import (
 	"crypto/aes"
@@ -14,7 +14,8 @@ import (
 // so memory will be wiped on every go run
 type FileVault struct {
 	// Where to write the file
-	FilePath string
+	FilePath      string
+	EncryptionKey string
 }
 
 // Rely on position args when calling
@@ -39,5 +40,32 @@ func (f *FileVault) Set(value, encryptionKey string) error {
 	// ciphertext is now encrypted
 	fmt.Println(ciphertext)
 	// Need to figure out how to write to file
+	return nil
+}
+
+func (f *FileVault) Get(value, encryptionKey string) error {
+	key, _ := hex.DecodeString(encryptionKey)
+	// Pull this value from db
+	ciphertext, _ := hex.DecodeString("")
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return fmt.Errorf("failed to create cipher: %s", err)
+	}
+
+	// The IV needs to be unique, but not secure. Therefore it's common to
+	// include it at the beginning of the ciphertext.
+	if len(ciphertext) < aes.BlockSize {
+		return fmt.Errorf("ciphertext is too short: %s", err)
+	}
+	iv := ciphertext[:aes.BlockSize]
+	ciphertext = ciphertext[aes.BlockSize:]
+
+	stream := cipher.NewCFBDecrypter(block, iv)
+
+	// XORKeyStream can work in-place if the two arguments are the same.
+	stream.XORKeyStream(ciphertext, ciphertext)
+	fmt.Printf("%s", ciphertext)
+
 	return nil
 }
