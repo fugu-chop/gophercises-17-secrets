@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	secretsLocation = "/Users/dean/Desktop"
+	secretsLocation = "/Users/dean/Desktop/secrets.txt"
 	encryptionKey   = "6368616e676520746869732070617373"
 )
 
@@ -19,25 +19,20 @@ func main() {
 		EncryptionKey: encryptionKey,
 	}
 
-	// Shut the linter up
-	_ = vault
-
-	var secretsFile *os.File
 	// Check if secrets files exists
 	if _, err := os.Stat(secretsLocation); err != nil {
 		log.Printf("creating secrets.txt file at %s", secretsLocation)
-		secretsFile, err = os.Create(secretsLocation)
+		vault.VaultFile, err = os.Create(secretsLocation)
 		if err != nil {
 			log.Fatalf("could not create secrets file: %s", err)
 		}
 	} else {
-		secretsFile, err = os.Open(secretsLocation)
+		vault.VaultFile, err = os.Open(secretsLocation)
 		if err != nil {
 			log.Fatalf("could not open secrets file: %s", err)
 		}
 		log.Println("secrets.txt file already exists")
 	}
 
-	// Write the file to a map, insert onto filevault
-	fmt.Println(secretsFile.Name())
+	fmt.Println(vault.VaultFile.Name())
 }

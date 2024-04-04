@@ -7,14 +7,15 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"os"
 )
 
 // Initialise this on startup
 // The CLI doesn't seem to allow persistent running app
 // so memory will be wiped on every go run
 type FileVault struct {
-	KeySet        map[string]string
 	EncryptionKey string
+	VaultFile     *os.File
 }
 
 // Does not allow for amending existing
