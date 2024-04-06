@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	vault "secrets/pkg/vault"
@@ -9,7 +8,7 @@ import (
 
 const (
 	secretsLocation = "/Users/dean/Desktop/secrets.txt"
-	encryptionKey   = "6368616e676520746869732070617373"
+	encryptionKey   = "6368616e6765207468697320ab70617373"
 )
 
 func main() {
@@ -22,17 +21,19 @@ func main() {
 	// Check if secrets files exists
 	if _, err := os.Stat(secretsLocation); err != nil {
 		log.Printf("creating secrets.txt file at %s", secretsLocation)
-		vault.VaultFile, err = os.Create(secretsLocation)
+		file, err := os.Create(secretsLocation)
 		if err != nil {
 			log.Fatalf("could not create secrets file: %s", err)
 		}
+		defer file.Close()
 	} else {
-		vault.VaultFile, err = os.Open(secretsLocation)
-		if err != nil {
-			log.Fatalf("could not open secrets file: %s", err)
-		}
-		log.Println("secrets.txt file already exists")
+		log.Print("secrets.txt file already exists")
 	}
 
-	fmt.Println(vault.VaultFile.Name())
+	if err := vault.GenerateVault(secretsLocation); err != nil {
+		log.Fatalf("could not read from secrets file: %s", err)
+	}
+
+	// Test what writing a map[string]string to a file looks like
+	// probably need to use encoding/gob
 }

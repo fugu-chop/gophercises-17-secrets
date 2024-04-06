@@ -8,14 +8,38 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 )
 
-// Initialise this on startup
-// The CLI doesn't seem to allow persistent running app
-// so memory will be wiped on every go run
 type FileVault struct {
 	EncryptionKey string
-	VaultFile     *os.File
+	vaultSecrets  map[string]string
+}
+
+func (f *FileVault) GenerateVault(fileLocation string) error {
+	file, err := os.ReadFile(fileLocation)
+	if err != nil {
+		return err
+	}
+
+	if len(file) == 0 {
+		return nil
+	}
+
+	f.vaultSecrets = make(map[string]string)
+	secretsPairs := strings.Split(string(file), "\n")
+	for _, secret := range secretsPairs {
+		pair := strings.Split(secret, " ")
+		f.vaultSecrets[pair[0]] = pair[1]
+	}
+
+	return nil
+}
+
+// Ideally we only write secrets that are new to disk
+// But not a hard requirement
+func (f *FileVault) WriteSecrets(secrets map[string]string, writePath string) error {
+	return nil
 }
 
 // Does not allow for amending existing
@@ -39,7 +63,8 @@ func (f *FileVault) Set(value string) error {
 
 	// ciphertext is now encrypted
 	fmt.Println(ciphertext)
-	// Add this to our map
+	// add to map
+	// write to disc
 	return nil
 }
 
