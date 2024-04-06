@@ -30,7 +30,12 @@ func (f *FileVault) GenerateVault(fileLocation string) error {
 	secretsPairs := strings.Split(string(file), "\n")
 	for _, secret := range secretsPairs {
 		pair := strings.Split(secret, " ")
-		f.vaultSecrets[pair[0]] = pair[1]
+		// This len check is to ensure that the last entry of the
+		// file which will be a blank line is not parsed into
+		// vaultSecrets so that an out-of-bounds error won't occur
+		if len(pair) > 1 {
+			f.vaultSecrets[pair[0]] = pair[1]
+		}
 	}
 
 	return nil
