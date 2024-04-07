@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"os"
 	vault "secrets/pkg/vault"
 )
 
@@ -18,20 +17,8 @@ func main() {
 		EncryptionKey: encryptionKey,
 	}
 
-	// Check if secrets files exists
-	if _, err := os.Stat(secretsLocation); err != nil {
-		log.Printf("creating secrets.txt file at %s", secretsLocation)
-		file, err := os.Create(secretsLocation)
-		if err != nil {
-			log.Fatalf("could not create secrets file: %s", err)
-		}
-		defer file.Close()
-	} else {
-		log.Print("secrets.txt file already exists")
-	}
-
 	if err := vault.GenerateVault(secretsLocation); err != nil {
-		log.Fatalf("could not read from secrets file: %s", err)
+		log.Fatalf("could not generate vault from secrets file: %s", err)
 	}
 
 	// Test what writing a map[string]string to a file looks like

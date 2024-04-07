@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"strings"
 )
@@ -14,20 +15,39 @@ import (
 type FileVault struct {
 	EncryptionKey string
 	vaultSecrets  map[string]string
+	fileLocation  string
 }
 
 func (f *FileVault) GenerateVault(fileLocation string) error {
-	file, err := os.ReadFile(fileLocation)
-	if err != nil {
-		return err
-	}
+	f.fileLocation = fileLocation
 
-	if len(file) == 0 {
-		return nil
+	// Ensure file exists through O_APPEND or O_CREATE
+	file, err := os.OpenFile(f.fileLocation, os.O_APPEND|os.O_CREATE|os.O_RDONLY, os.ModePerm)
+	if err != nil {
+		log.Fatalf("could not access secrets file: %s", err)
+	}
+	defer file.Close()
+
+	buffer := make([]byte, 256)
+	// Reuse buffer
+	for {
+		records, err := file.Read(buffer)
+		if records == 0 {
+			f.vaultSecrets = make(map[string]string)
+			return nil
+		}
+		// Handle io.EOF defines the end of the file
+		// but is returned as an error
+		if err == io.EOF {
+			break
+		}
+		if err != nil && err != io.EOF {
+			return err
+		}
 	}
 
 	f.vaultSecrets = make(map[string]string)
-	secretsPairs := strings.Split(string(file), "\n")
+	secretsPairs := strings.Split(string(buffer), "\n")
 	for _, secret := range secretsPairs {
 		pair := strings.Split(secret, " ")
 		// This len check is to ensure that the last entry of the
@@ -41,13 +61,23 @@ func (f *FileVault) GenerateVault(fileLocation string) error {
 	return nil
 }
 
-// Ideally we only write secrets that are new to disk
-// But not a hard requirement
-func (f *FileVault) WriteSecrets(secrets map[string]string, writePath string) error {
+func (f *FileVault) WriteSecrets(secrets map[string]string) error {
+	// Need to test
+	// Don't think this will work, Open is readonly
+	file, err := os.Open(f.fileLocation)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	for key, secret := range secrets {
+		file.WriteString(fmt.Sprintf("%s %s", key, secret))
+	}
+
 	return nil
 }
 
-// Does not allow for amending existing
+// Does not allow for amending existing secrets file
 func (f *FileVault) Set(value string) error {
 	key, _ := hex.DecodeString(f.EncryptionKey)
 	plaintext := []byte(value)
@@ -68,8 +98,15 @@ func (f *FileVault) Set(value string) error {
 
 	// ciphertext is now encrypted
 	fmt.Println(ciphertext)
+
 	// add to map
-	// write to disc
+	f.vaultSecrets[value] = string(ciphertext)
+
+	// write to disc - we will have to replace the file on each iteration
+	if err = f.WriteSecrets(f.vaultSecrets); err != nil {
+		return fmt.Errorf("failed to write secrets: %s", err)
+	}
+
 	return nil
 }
 
