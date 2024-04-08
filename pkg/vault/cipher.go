@@ -54,14 +54,6 @@ func (f *FileVault) GenerateVault(fileLocation string) error {
 		}
 	}
 
-	if err := f.Set("hello", "password123"); err != nil {
-		return err
-	}
-
-	if err := f.Get("hello"); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -80,8 +72,11 @@ func (f *FileVault) WriteSecrets(secrets map[string]string) error {
 	return nil
 }
 
-// Should we check for existing key?
 func (f *FileVault) Set(flag, secret string) error {
+	if _, ok := f.vaultSecrets[flag]; ok {
+		return nil
+	}
+
 	key, _ := hex.DecodeString(f.EncryptionKey)
 	plaintext := []byte(secret)
 	block, err := aes.NewCipher(key)
@@ -112,6 +107,10 @@ func (f *FileVault) Set(flag, secret string) error {
 }
 
 func (f *FileVault) Get(value string) error {
+	if _, ok := f.vaultSecrets[value]; !ok {
+		return fmt.Errorf("failed find key in vault: %s", value)
+	}
+
 	key, _ := hex.DecodeString(f.EncryptionKey)
 	ciphertext, err := hex.DecodeString(f.vaultSecrets[value])
 	if err != nil {
