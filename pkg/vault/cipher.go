@@ -31,11 +31,7 @@ func (f *FileVault) GenerateVault(fileLocation string) error {
 	buffer := make([]byte, 256)
 	// Reuse buffer
 	for {
-		records, err := file.Read(buffer)
-		if records == 0 {
-			f.vaultSecrets = make(map[string]string)
-			return nil
-		}
+		_, err := file.Read(buffer)
 		// Handle io.EOF defines the end of the file
 		// but is returned as an error
 		if err == io.EOF {
@@ -58,13 +54,20 @@ func (f *FileVault) GenerateVault(fileLocation string) error {
 		}
 	}
 
+	if err := f.Set("hello", "password123"); err != nil {
+		return err
+	}
+
+	if err := f.Get("hello"); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (f *FileVault) WriteSecrets(secrets map[string]string) error {
 	// Need to test
-	// Don't think this will work, Open is readonly
-	file, err := os.Open(f.fileLocation)
+	file, err := os.OpenFile(f.fileLocation, os.O_WRONLY, os.ModePerm)
 	if err != nil {
 		return err
 	}
@@ -77,10 +80,10 @@ func (f *FileVault) WriteSecrets(secrets map[string]string) error {
 	return nil
 }
 
-// Does not allow for amending existing secrets file
-func (f *FileVault) Set(value string) error {
+// Should we check for existing key?
+func (f *FileVault) Set(flag, secret string) error {
 	key, _ := hex.DecodeString(f.EncryptionKey)
-	plaintext := []byte(value)
+	plaintext := []byte(secret)
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return fmt.Errorf("failed to create cipher: %s", err)
@@ -93,14 +96,12 @@ func (f *FileVault) Set(value string) error {
 		return fmt.Errorf("failed to generate ciphertext: %s", err)
 	}
 
+	// ciphertext is mutated
 	stream := cipher.NewCFBEncrypter(block, iv)
 	stream.XORKeyStream(ciphertext[aes.BlockSize:], plaintext)
 
-	// ciphertext is now encrypted
-	fmt.Println(ciphertext)
-
-	// add to map
-	f.vaultSecrets[value] = string(ciphertext)
+	// We need to format the bytes to "base 16, lower-case, two characters per byte"
+	f.vaultSecrets[flag] = fmt.Sprintf("%x", ciphertext)
 
 	// write to disc - we will have to replace the file on each iteration
 	if err = f.WriteSecrets(f.vaultSecrets); err != nil {
@@ -112,8 +113,10 @@ func (f *FileVault) Set(value string) error {
 
 func (f *FileVault) Get(value string) error {
 	key, _ := hex.DecodeString(f.EncryptionKey)
-	// Pull this value from file
-	ciphertext, _ := hex.DecodeString("")
+	ciphertext, err := hex.DecodeString(f.vaultSecrets[value])
+	if err != nil {
+		return fmt.Errorf("failed to decrypt cipher: %s", err)
+	}
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -132,7 +135,7 @@ func (f *FileVault) Get(value string) error {
 
 	// XORKeyStream can work in-place if the two arguments are the same.
 	stream.XORKeyStream(ciphertext, ciphertext)
-	fmt.Printf("%s", ciphertext)
+	fmt.Printf("%s\n", ciphertext)
 
 	return nil
 }

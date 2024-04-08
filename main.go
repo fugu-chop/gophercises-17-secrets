@@ -7,7 +7,7 @@ import (
 
 const (
 	secretsLocation = "/Users/dean/Desktop/secrets.txt"
-	encryptionKey   = "6368616e6765207468697320ab70617373"
+	encryptionKey   = "6368616e676520746869732070617373"
 )
 
 func main() {
@@ -20,7 +20,4 @@ func main() {
 	if err := vault.GenerateVault(secretsLocation); err != nil {
 		log.Fatalf("could not generate vault from secrets file: %s", err)
 	}
-
-	// Test what writing a map[string]string to a file looks like
-	// probably need to use encoding/gob
 }
