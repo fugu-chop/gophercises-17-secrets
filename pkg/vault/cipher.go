@@ -12,6 +12,11 @@ import (
 	"strings"
 )
 
+/*
+Encryption and decryption are based on crypto/cipher
+package available as part of standard library
+See: https://pkg.go.dev/crypto/cipher
+*/
 type FileVault struct {
 	EncryptionKey string
 	vaultSecrets  map[string]string
@@ -32,7 +37,7 @@ func (f *FileVault) GenerateVault(fileLocation string) error {
 	// Reuse buffer
 	for {
 		_, err := file.Read(buffer)
-		// Handle io.EOF defines the end of the file
+		// io.EOF defines the end of the file
 		// but is returned as an error
 		if err == io.EOF {
 			break
@@ -58,7 +63,6 @@ func (f *FileVault) GenerateVault(fileLocation string) error {
 }
 
 func (f *FileVault) WriteSecrets(secrets map[string]string) error {
-	// Need to test
 	file, err := os.OpenFile(f.fileLocation, os.O_WRONLY, os.ModePerm)
 	if err != nil {
 		return err
@@ -98,7 +102,7 @@ func (f *FileVault) Set(flag, secret string) error {
 	// We need to format the bytes to "base 16, lower-case, two characters per byte"
 	f.vaultSecrets[flag] = fmt.Sprintf("%x", ciphertext)
 
-	// write to disc - we will have to replace the file on each iteration
+	// we will have to replace the file on each iteration
 	if err = f.WriteSecrets(f.vaultSecrets); err != nil {
 		return fmt.Errorf("failed to write secrets: %s", err)
 	}
