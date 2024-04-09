@@ -137,5 +137,5 @@ func (f *FileVault) Get(value string) (string, error) {
 	// XORKeyStream can work in-place if the two arguments are the same.
 	stream.XORKeyStream(ciphertext, ciphertext)
 
-	return fmt.Sprintf("%q", ciphertext), nil
+	return string(ciphertext), nil
 }
