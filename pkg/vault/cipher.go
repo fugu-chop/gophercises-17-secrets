@@ -99,6 +99,7 @@ func (f *FileVault) Set(flag, secret string) error {
 	stream := cipher.NewCFBEncrypter(block, iv)
 	stream.XORKeyStream(ciphertext[aes.BlockSize:], plaintext)
 	// We need to format the bytes to "base 16, lower-case, two characters per byte"
+	// This is hex format
 	f.vaultSecrets[flag] = fmt.Sprintf("%x", ciphertext)
 
 	// we will have to replace the file on each iteration
