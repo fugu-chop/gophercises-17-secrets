@@ -63,14 +63,14 @@ func (f *FileVault) GenerateVault(fileLocation string) error {
 }
 
 func (f *FileVault) WriteSecrets(secrets map[string]string) error {
-	file, err := os.OpenFile(f.fileLocation, os.O_WRONLY, os.ModePerm)
+	file, err := os.OpenFile(f.fileLocation, os.O_APPEND|os.O_CREATE|os.O_RDWR, os.ModePerm)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
 	for key, secret := range secrets {
-		file.WriteString(fmt.Sprintf("%s %s", key, secret))
+		file.WriteString(fmt.Sprintf("%s %s\n", key, secret))
 	}
 
 	return nil
@@ -98,7 +98,6 @@ func (f *FileVault) Set(flag, secret string) error {
 	// ciphertext is mutated
 	stream := cipher.NewCFBEncrypter(block, iv)
 	stream.XORKeyStream(ciphertext[aes.BlockSize:], plaintext)
-
 	// We need to format the bytes to "base 16, lower-case, two characters per byte"
 	f.vaultSecrets[flag] = fmt.Sprintf("%x", ciphertext)
 
@@ -110,35 +109,33 @@ func (f *FileVault) Set(flag, secret string) error {
 	return nil
 }
 
-func (f *FileVault) Get(value string) error {
+func (f *FileVault) Get(value string) (string, error) {
 	if _, ok := f.vaultSecrets[value]; !ok {
-		return fmt.Errorf("failed find key in vault: %s", value)
+		return "", fmt.Errorf("failed find key in vault: %s", value)
 	}
 
 	key, _ := hex.DecodeString(f.EncryptionKey)
 	ciphertext, err := hex.DecodeString(f.vaultSecrets[value])
 	if err != nil {
-		return fmt.Errorf("failed to decrypt cipher: %s", err)
+		return "", fmt.Errorf("failed to decrypt cipher: %s", err)
 	}
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		return fmt.Errorf("failed to create cipher: %s", err)
+		return "", fmt.Errorf("failed to create cipher: %s", err)
 	}
 
 	// The IV needs to be unique, but not secure. Therefore it's common to
 	// include it at the beginning of the ciphertext.
 	if len(ciphertext) < aes.BlockSize {
-		return fmt.Errorf("ciphertext is too short: %s", err)
+		return "", fmt.Errorf("ciphertext is too short: %s", err)
 	}
 	iv := ciphertext[:aes.BlockSize]
 	ciphertext = ciphertext[aes.BlockSize:]
 
 	stream := cipher.NewCFBDecrypter(block, iv)
-
 	// XORKeyStream can work in-place if the two arguments are the same.
 	stream.XORKeyStream(ciphertext, ciphertext)
-	fmt.Printf("%s\n", ciphertext)
 
-	return nil
+	return fmt.Sprintf("%q", ciphertext), nil
 }

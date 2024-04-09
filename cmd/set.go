@@ -1,7 +1,8 @@
 package cmd
 
 import (
-	"fmt"
+	"log"
+	vault "secrets/pkg/vault"
 
 	"github.com/spf13/cobra"
 )
@@ -17,8 +18,17 @@ var setCmd = &cobra.Command{
 	// Need to validate second arg has quotation marks (or no quotation marks?)
 	Args: cobra.MatchAll(cobra.ExactArgs(2)),
 	Run: func(cmd *cobra.Command, args []string) {
-		for _, arg := range args {
-			fmt.Println(arg)
+		vault := vault.FileVault{
+			EncryptionKey: encryptionKey,
+		}
+
+		if err := vault.GenerateVault(secretsLocation); err != nil {
+			log.Fatalf("could not generate vault from secrets file: %s", err)
+		}
+
+		err := vault.Set(args[0], args[1])
+		if err != nil {
+			log.Fatal(err)
 		}
 	},
 }
