@@ -24,16 +24,13 @@ var getCmd = &cobra.Command{
 	key stored locally.`,
 	Args: cobra.MatchAll(cobra.ExactArgs(1)),
 	Run: func(cmd *cobra.Command, args []string) {
-		vault := vault.FileVault{
-			EncryptionKey: encryptionKey,
-		}
-
-		if err := vault.GenerateVault(secretsLocation); err != nil {
+		fileVault, err := vault.NewVault(secretsLocation, encryptionKey)
+		if err != nil {
 			log.Fatalf("could not generate vault from secrets file: %s", err)
 		}
 
-		if decryptionKey == vault.EncryptionKey {
-			key, err := vault.Get(args[0])
+		if decryptionKey == fileVault.EncryptionKey {
+			key, err := fileVault.Get(args[0])
 			if err != nil {
 				log.Fatalf("could not fetch key %s, %s", args[0], err)
 			}

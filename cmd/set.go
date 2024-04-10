@@ -18,15 +18,12 @@ var setCmd = &cobra.Command{
 	// Need to validate second arg has quotation marks (or no quotation marks?)
 	Args: cobra.MatchAll(cobra.ExactArgs(2)),
 	Run: func(cmd *cobra.Command, args []string) {
-		vault := vault.FileVault{
-			EncryptionKey: encryptionKey,
-		}
-
-		if err := vault.GenerateVault(secretsLocation); err != nil {
+		fileVault, err := vault.NewVault(secretsLocation, encryptionKey)
+		if err != nil {
 			log.Fatalf("could not generate vault from secrets file: %s", err)
 		}
 
-		err := vault.Set(args[0], args[1])
+		err = fileVault.Set(args[0], args[1])
 		if err != nil {
 			log.Fatal(err)
 		}

@@ -23,6 +23,21 @@ type FileVault struct {
 	fileLocation  string
 }
 
+func NewVault(fileLocation, encryptionKey string) (*FileVault, error) {
+	vault := &FileVault{
+		fileLocation:  fileLocation,
+		EncryptionKey: encryptionKey,
+		vaultSecrets:  make(map[string]string),
+	}
+
+	if err := vault.GenerateVault(fileLocation); err != nil {
+		log.Fatalf("could not access secrets file: %s", err)
+		return nil, err
+	}
+
+	return vault, nil
+}
+
 func (f *FileVault) GenerateVault(fileLocation string) error {
 	f.fileLocation = fileLocation
 
