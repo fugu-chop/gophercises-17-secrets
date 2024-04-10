@@ -95,6 +95,9 @@ func (f *FileVault) WriteSecrets(secrets map[string]string) error {
 	return nil
 }
 
+// Another (probably better) approach in the solution videos
+// is to just have everything in plain-text, then encode to json
+// and then encrypt the entire JSON
 func (f *FileVault) Set(flag, secret string) error {
 	f.m.Lock()
 	defer f.m.Unlock()
