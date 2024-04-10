@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
 )
 
 /*
@@ -18,6 +19,7 @@ package available as part of standard library
 See: https://pkg.go.dev/crypto/cipher
 */
 type FileVault struct {
+	m             sync.Mutex
 	EncryptionKey string
 	vaultSecrets  map[string]string
 	fileLocation  string
@@ -78,6 +80,8 @@ func (f *FileVault) GenerateVault(fileLocation string) error {
 }
 
 func (f *FileVault) WriteSecrets(secrets map[string]string) error {
+	f.m.Lock()
+	defer f.m.Unlock()
 	file, err := os.OpenFile(f.fileLocation, os.O_APPEND|os.O_CREATE|os.O_RDWR, os.ModePerm)
 	if err != nil {
 		return err
@@ -92,6 +96,8 @@ func (f *FileVault) WriteSecrets(secrets map[string]string) error {
 }
 
 func (f *FileVault) Set(flag, secret string) error {
+	f.m.Lock()
+	defer f.m.Unlock()
 	if _, ok := f.vaultSecrets[flag]; ok {
 		return nil
 	}
@@ -126,6 +132,9 @@ func (f *FileVault) Set(flag, secret string) error {
 }
 
 func (f *FileVault) Get(value string) (string, error) {
+	// Mutex here is to avoid getting a value that is being written
+	f.m.Lock()
+	defer f.m.Unlock()
 	if _, ok := f.vaultSecrets[value]; !ok {
 		return "", fmt.Errorf("failed find key in vault: %s", value)
 	}

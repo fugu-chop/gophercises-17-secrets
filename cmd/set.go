@@ -15,7 +15,6 @@ var setCmd = &cobra.Command{
 	key value, followed by the -k flag with an encoding key
 	to store an encrypted key locally.`,
 	// Rely on cobra PositionalArgs for 'non-named' flags
-	// Need to validate second arg has quotation marks (or no quotation marks?)
 	Args: cobra.MatchAll(cobra.ExactArgs(2)),
 	Run: func(cmd *cobra.Command, args []string) {
 		fileVault, err := vault.NewVault(secretsLocation, encryptionKey)
